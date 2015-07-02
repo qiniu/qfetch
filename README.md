@@ -63,3 +63,11 @@ qfetch -ak='x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk='OCCTbp-zhD8x_spN0tFx4
 ```
 
 上面的指令抓取文件索引`diff.txt`里面的文件，存储到空间`piccenter`里面，并发请求数量`300`，任务的名称叫做`diff`，成功列表日志文件名称是`.diff.job`。另外由于该命令打印的报警日志输出到终端，所以可以使用`tee`命令将内容复制一份到日志文件中。
+
+导出成功列表：
+
+```
+leveldb -export='.diff.job' >> list.txt
+```
+
+注意，任务的leveldb的名字时`.diff.job`。
