@@ -123,3 +123,7 @@ leveldb -export='.diff.job' >> list.txt
 ```
 
 注意，上面任务的名字是`diff`，而任务对应的的leveldb的名字是`.diff.job`。
+
+
+###帮助
+如果您遇到任何问题，可以加QQ：2037014430，我将乐意帮助您，非技术问题勿扰。
