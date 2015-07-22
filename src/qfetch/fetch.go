@@ -6,6 +6,7 @@ import (
 	"github.com/qiniu/api/auth/digest"
 	"github.com/qiniu/api/rs"
 	"github.com/syndtr/goleveldb/leveldb"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -46,13 +47,27 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int) {
 		}
 
 		items := strings.Split(line, "\t")
-		if len(items) != 2 {
+		if !(len(items) == 1 || len(items) == 2) {
 			fmt.Println("Invalid resource line,", line)
 			continue
 		}
 
 		resUrl := items[0]
-		resKey := items[1]
+		resKey := ""
+
+		if len(items) == 1 {
+			resUri, pErr := url.Parse(resUrl)
+			if pErr != nil {
+				fmt.Println("Invalid resource url", resUrl)
+				continue
+			}
+			resKey = resUri.Path
+			if strings.HasPrefix(resKey, "/") {
+				resKey = resKey[1:]
+			}
+		} else if len(items) == 2 {
+			resKey = items[1]
+		}
 
 		//check from leveldb whether it is done
 		val, exists := ldb.Get([]byte(resUrl), nil)
