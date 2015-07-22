@@ -122,4 +122,4 @@ qfetch -ak='x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk='OCCTbp-zhD8x_spN0tFx4
 leveldb -export='.diff.job' >> list.txt
 ```
 
-注意，任务的leveldb的名字时`.diff.job`。
+注意，上面任务的名字是`diff`，而任务对应的的leveldb的名字是`.diff.job`。
