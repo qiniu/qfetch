@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/qiniu/api/auth/digest"
+	"github.com/qiniu/api/conf"
 	"github.com/qiniu/api/rs"
 	"github.com/syndtr/goleveldb/leveldb"
 	"net/url"
@@ -12,7 +13,7 @@ import (
 	"sync"
 )
 
-func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int) {
+func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone string) {
 	//open file
 	fh, openErr := os.Open(filePath)
 	if openErr != nil {
@@ -31,6 +32,10 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int) {
 	}
 	defer ldb.Close()
 	//fetch prepare
+	if zone == "z1" {
+		conf.IO_HOST = "http://iovip-z1.qbox.me"
+	}
+
 	mac := digest.Mac{
 		accessKey, []byte(secretKey),
 	}

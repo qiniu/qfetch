@@ -17,38 +17,28 @@ func main() {
 	var bucket string
 	var accessKey string
 	var secretKey string
+	var zone string
 
-	flag.StringVar(&job, "job", "fetch-test", "job name to record the progress")
+	flag.Usage = func() {
+		fmt.Println(`Usage of qfetch:
+  -ak="": qiniu access key
+  -sk="": qiniu secret key
+  -bucket="": qiniu bucket
+  -job="": job name to record the progress
+  -file="": resource list file to fetch
+  -worker=0: max goroutine in a worker group
+  -zone="z0": qiniu zone, z0 or z1`)
+	}
+
+	flag.StringVar(&job, "job", "", "job name to record the progress")
 	flag.IntVar(&worker, "worker", 0, "max goroutine in a worker group")
-	flag.StringVar(&file, "file", "/home/jemy/Documents/resource.list", "resource file to fetch")
-	flag.StringVar(&bucket, "bucket", "demo", "qiniu bucket")
-	flag.StringVar(&accessKey, "ak", "HCALkwxJcWd_8UlXCb6QWdA-pEZj1FXXSK0G1lMw", "qiniu access key")
-	flag.StringVar(&secretKey, "sk", "B0dP7eMztCMnmDiZfdrKXt69_q54fogZs2b1qAMx", "qiniu secret key")
+	flag.StringVar(&file, "file", "", "resource file to fetch")
+	flag.StringVar(&bucket, "bucket", "", "qiniu bucket")
+	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
+	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
+	flag.StringVar(&zone, "zone", "z0", "qiniu zone, z0 or z1")
 
 	flag.Parse()
-
-	if job == "" {
-		fmt.Println("Invalid job name")
-		return
-	}
-	if worker <= 0 {
-		fmt.Println("Invalid worker")
-		return
-	}
-	if file == "" {
-		fmt.Println("Invalid resource file name")
-		return
-	}
-	_, ferr := os.Stat(file)
-	if ferr != nil {
-		fmt.Println(fmt.Sprintf("File `%s' not exist", file))
-		return
-	}
-
-	if bucket == "" {
-		fmt.Println("Bucket is not set")
-		return
-	}
 
 	if accessKey == "" {
 		fmt.Println("AccessKey is not set")
@@ -59,5 +49,36 @@ func main() {
 		fmt.Println("SecretKey is not set")
 		return
 	}
-	qfetch.Fetch(job, file, bucket, accessKey, secretKey, worker)
+
+	if bucket == "" {
+		fmt.Println("Bucket is not set")
+		return
+	}
+
+	if job == "" {
+		fmt.Println("Invalid job name")
+		return
+	}
+
+	if file == "" {
+		fmt.Println("Invalid resource file name")
+		return
+	}
+	_, ferr := os.Stat(file)
+	if ferr != nil {
+		fmt.Println(fmt.Sprintf("File `%s' not exist", file))
+		return
+	}
+
+	if worker <= 0 {
+		fmt.Println("Invalid worker")
+		return
+	}
+
+	if zone == "" {
+		fmt.Println("Zone is not set")
+		return
+	}
+
+	qfetch.Fetch(job, file, bucket, accessKey, secretKey, worker, zone)
 }

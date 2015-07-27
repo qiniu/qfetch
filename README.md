@@ -9,19 +9,20 @@ qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://develope
 
 |版本     |支持平台|链接|
 |--------|---------|----|
-|qfetch v1.1|Linux, Windows, Mac OSX|[下载](http://7rfgu2.com1.z0.glb.clouddn.com/qfetch-v1.1.zip)|
+|qfetch v1.2|Linux, Windows, Mac OSX|[下载](http://7rfgu2.com1.z0.glb.clouddn.com/qfetch-v1.2.zip)|
 
 ###使用
 该工具是一个命令行工具，需要指定相关的参数来运行。
 
 ```
 Usage of qfetch:
-  -ak="HCALkwxJcWd_8UlXCb6QWdA-pEZj1FXXSK0G1lMw": qiniu access key
-  -sk="B0dP7eMztCMnmDiZfdrKXt69_q54fogZs2b1qAMx": qiniu secret key
-  -bucket="demo": qiniu bucket
-  -file="/home/jemy/Documents/resource.list": resource file to fetch
-  -job="fetch-test": job name to record the progress
+  -ak="": qiniu access key
+  -sk="": qiniu secret key
+  -bucket="": qiniu bucket
+  -job="": job name to record the progress
+  -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
+  -zone="z0": qiniu zone, z0 or z1
 ```
 
 上面所有的参数都是必须指定的。
@@ -31,9 +32,10 @@ Usage of qfetch:
 |ak|七牛账号的AccessKey，可以从七牛的后台获取|
 |sk|七牛账号的SecretKey，可以从七牛的后台获取|
 |bucket|文件抓取后存储的空间，为空间的名字|
-|file|抓取任务列表文件的本地路径，内容为多个由需要抓取的资源外链和对应的保存在七牛空间中的文件名组成的行|
 |job|任务的名称，指定这个参数主要用来将抓取成功的文件放在本地数据库中，便于后面核对|
+|file|抓取任务列表文件的本地路径，内容为多个由需要抓取的资源外链和对应的保存在七牛空间中的文件名组成的行|
 |worker|抓取的并发数量，可以适当地指定较大的并发请求数量来提高批量抓取的效率，可根据实际带宽和文件平均大小来计算得出|
+|zone|请求发送到的入口机房，默认为z0，即七牛宁波机房，可选设置为z1，即七牛北京机房|
 
 
 **模式一:**
