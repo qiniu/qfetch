@@ -123,6 +123,7 @@ http://img.abc.com/0/000/563/0000563515.fid
 qfetch -ak='x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk='OCCTbp-zhD8x_spN0tFx4WnMABHxggvveg9l9m07' 
 -bucket='image' -file='diff.txt' -worker=300 -job='diff'  | tee diff.log
 ```
+**注意：** Windows系统下面使用该工具时，指定的参数两边不需要单引号。
 
 上面的指令抓取文件索引`diff.txt`里面的文件，存储到空间`piccenter`里面，并发请求数量`300`，任务的名称叫做`diff`，成功列表日志文件名称是`.diff.job`。另外由于该命令打印的报警日志输出到终端，所以可以使用`tee`命令将内容复制一份到日志文件中。
 
