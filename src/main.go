@@ -27,7 +27,7 @@ func main() {
   -job="": job name to record the progress
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
-  -zone="z0": qiniu zone, z0 or z1`)
+  -zone="nb": qiniu zone, nb or bc or aws`)
 	}
 
 	flag.StringVar(&job, "job", "", "job name to record the progress")
@@ -36,7 +36,7 @@ func main() {
 	flag.StringVar(&bucket, "bucket", "", "qiniu bucket")
 	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
-	flag.StringVar(&zone, "zone", "z0", "qiniu zone, z0 or z1")
+	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb or bc or aws")
 
 	flag.Parse()
 

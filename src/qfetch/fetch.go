@@ -3,9 +3,9 @@ package qfetch
 import (
 	"bufio"
 	"fmt"
-	"github.com/qiniu/api/auth/digest"
-	"github.com/qiniu/api/conf"
-	"github.com/qiniu/api/rs"
+	"github.com/qiniu/api.v6/auth/digest"
+	"github.com/qiniu/api.v6/conf"
+	"github.com/qiniu/api.v6/rs"
 	"github.com/syndtr/goleveldb/leveldb"
 	"net/url"
 	"os"
@@ -32,8 +32,13 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 	}
 	defer ldb.Close()
 	//fetch prepare
-	if zone == "z1" {
+	switch zone {
+	case "bc":
 		conf.IO_HOST = "http://iovip-z1.qbox.me"
+	case "aws":
+		conf.IO_HOST = "http://iovip.gdipper.com"
+	default:
+		conf.IO_HOST = "http://iovip.qbox.me"
 	}
 
 	mac := digest.Mac{
