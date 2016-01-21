@@ -41,42 +41,42 @@ func main() {
 	flag.Parse()
 
 	if accessKey == "" {
-		fmt.Println("AccessKey is not set")
+		fmt.Println("Error: accessKey is not set")
 		return
 	}
 
 	if secretKey == "" {
-		fmt.Println("SecretKey is not set")
+		fmt.Println("Error: secretKey is not set")
 		return
 	}
 
 	if bucket == "" {
-		fmt.Println("Bucket is not set")
+		fmt.Println("Error: bucket is not set")
 		return
 	}
 
 	if job == "" {
-		fmt.Println("Invalid job name")
+		fmt.Println("Error: job name is not set")
 		return
 	}
 
 	if file == "" {
-		fmt.Println("Invalid resource file name")
+		fmt.Println("Error: resource file to fetch not set")
 		return
 	}
 	_, ferr := os.Stat(file)
 	if ferr != nil {
-		fmt.Println(fmt.Sprintf("File `%s' not exist", file))
+		fmt.Println(fmt.Sprintf("Error: file '%s' not exist", file))
 		return
 	}
 
 	if worker <= 0 {
-		fmt.Println("Invalid worker")
+		fmt.Println("Error: worker count must larger than zero")
 		return
 	}
 
-	if zone == "" {
-		fmt.Println("Zone is not set")
+	if !(zone == "nb" || zone == "bc" || zone == "aws") {
+		fmt.Println("Error: zone is incorrect")
 		return
 	}
 

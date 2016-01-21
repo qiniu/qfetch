@@ -3,7 +3,7 @@
 ###简介
 qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://developer.qiniu.com/docs/v6/api/reference/rs/fetch.html)功能来抓取指定文件列表中的文件。在文件列表中，你只需要提供资源的外链地址和要保存在七牛空间中的文件名就可以了。
 
-使用该工具进行资源抓取的时候，可以根据需要中断任务的执行，下次重新使用原命令执行的时候，会自动跳过已经抓取成功的资源。
+使用该工具进行资源抓取的时候，可以根据需要随时可以中断任务的执行，下次重新使用原命令执行的时候，会自动跳过已经抓取成功的资源。
 
 ###适用场景
 
@@ -18,7 +18,7 @@ qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://develope
 
 |版本     |支持平台|链接|
 |--------|---------|----|
-|qfetch v1.2|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.2.zip)|
+|qfetch v1.3|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.3.zip)|
 
 ###使用
 该工具是一个命令行工具，需要指定相关的参数来运行。
@@ -31,7 +31,7 @@ Usage of qfetch:
   -job="": job name to record the progress
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
-  -zone="z0": qiniu zone, z0 or z1
+  -zone="nb": qiniu zone, nb or bc or aws
 ```
 
 
@@ -43,7 +43,7 @@ Usage of qfetch:
 |job|任务的名称，指定这个参数主要用来将抓取成功的文件放在本地数据库中，便于后面核对|是|
 |file|待抓取资源链接所在文件的本地路径，内容由待抓取的资源外链和对应的保存在七牛空间中的文件名组成的行构成|是|
 |worker|抓取的并发数量，可以适当地指定较大的并发请求数量来提高批量抓取的效率，可根据目标源站实际带宽和文件平均大小来计算得出|是|
-|zone|请求发送到的入口机房，可以不指定，默认为z0，即七牛宁波机房；可选设置为z1，即七牛北京机房|否|
+|zone|请求发送到的入口机房，可以不指定，默认为nb，即七牛宁波机房；可选设置为bc，即七牛北京机房|否|
 
 
 **模式一:**
