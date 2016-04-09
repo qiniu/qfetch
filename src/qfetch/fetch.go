@@ -95,7 +95,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		go func() {
 			defer wg.Done()
 
-			fErr := client.Fetch(nil, bucket, resKey, resUrl)
+			_, fErr := client.Fetch(nil, bucket, resKey, resUrl)
 			if fErr == nil {
 				ldb.Put([]byte(resUrl), []byte(resKey), nil)
 			} else {
