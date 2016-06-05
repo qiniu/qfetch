@@ -18,7 +18,7 @@ qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://develope
 
 |版本     |支持平台|链接|
 |--------|---------|----|
-|qfetch v1.3|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.3.zip)|
+|qfetch v1.4|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.4.zip)|
 
 ###使用
 该工具是一个命令行工具，需要指定相关的参数来运行。
