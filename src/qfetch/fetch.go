@@ -104,9 +104,8 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		}
 
 		//otherwise fetch it
-
 		fetchWaitGroup.Add(1)
-		go func() {
+		fetchTasks <- func() {
 			defer fetchWaitGroup.Done()
 
 			_, fErr := client.Fetch(nil, bucket, resKey, resUrl)
@@ -115,7 +114,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 			} else {
 				fmt.Println("Fetch", resUrl, " error due to", fErr)
 			}
-		}()
+		}
 	}
 
 	fetchWaitGroup.Wait()
