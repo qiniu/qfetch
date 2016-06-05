@@ -13,6 +13,16 @@ import (
 	"sync"
 )
 
+var once sync.Once
+var fetchTasks chan func()
+
+func doFetch(tasks chan func()) {
+	for {
+		task := <-tasks
+		task()
+	}
+}
+
 func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone string) {
 	//open file
 	fh, openErr := os.Open(filePath)
@@ -45,8 +55,16 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		accessKey, []byte(secretKey),
 	}
 	client := rs.New(&mac)
-	wg := sync.WaitGroup{}
-	var seq int = 0
+
+	once.Do(func() {
+		fetchTasks = make(chan func(), worker)
+		for i := 0; i < worker; i++ {
+			go doFetch(fetchTasks)
+		}
+	})
+
+	fetchWaitGroup := sync.WaitGroup{}
+
 	//scan each line
 	bReader := bufio.NewScanner(fh)
 	bReader.Split(bufio.ScanLines)
@@ -86,14 +104,10 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		}
 
 		//otherwise fetch it
-		seq += 1
-		if seq%worker == 0 {
-			wg.Wait()
-		}
 
-		wg.Add(1)
+		fetchWaitGroup.Add(1)
 		go func() {
-			defer wg.Done()
+			defer fetchWaitGroup.Done()
 
 			_, fErr := client.Fetch(nil, bucket, resKey, resUrl)
 			if fErr == nil {
@@ -103,5 +117,6 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 			}
 		}()
 	}
-	wg.Wait()
+
+	fetchWaitGroup.Wait()
 }
