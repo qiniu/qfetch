@@ -18,6 +18,7 @@ func main() {
 	var accessKey string
 	var secretKey string
 	var zone string
+	var logFile string
 
 	flag.Usage = func() {
 		fmt.Println(`Usage of qfetch:
@@ -27,6 +28,7 @@ func main() {
   -job="": job name to record the progress
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
+  -log="": fetch failed log file
   -zone="nb": qiniu zone, nb or bc or aws`)
 	}
 
@@ -37,6 +39,7 @@ func main() {
 	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
 	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb or bc or aws")
+	flag.StringVar(&logFile, "log", "", "fetch failed log file")
 
 	flag.Parse()
 
@@ -80,5 +83,5 @@ func main() {
 		return
 	}
 
-	qfetch.Fetch(job, file, bucket, accessKey, secretKey, worker, zone)
+	qfetch.Fetch(job, file, bucket, accessKey, secretKey, worker, zone, logFile)
 }

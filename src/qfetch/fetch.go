@@ -6,7 +6,9 @@ import (
 	"github.com/qiniu/api.v6/auth/digest"
 	"github.com/qiniu/api.v6/conf"
 	"github.com/qiniu/api.v6/rs"
+	"github.com/qiniu/rpc"
 	"github.com/syndtr/goleveldb/leveldb"
+	"log"
 	"net/url"
 	"os"
 	"strings"
@@ -23,7 +25,7 @@ func doFetch(tasks chan func()) {
 	}
 }
 
-func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone string) {
+func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
 	//open file
 	fh, openErr := os.Open(filePath)
 	if openErr != nil {
@@ -32,8 +34,17 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 	}
 	defer fh.Close()
 
+	logFh, openErr := os.Create(logFile)
+	if openErr != nil {
+		log.SetOutput(os.Stdout)
+	} else {
+		log.SetOutput(logFh)
+		defer logFh.Close()
+	}
+
 	//open leveldb
 	proFile := fmt.Sprintf(".%s.job", job)
+	notFoundFile := fmt.Sprintf(".%s.404.job", job)
 	ldb, lerr := leveldb.OpenFile(proFile, nil)
 
 	if lerr != nil {
@@ -41,6 +52,13 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		return
 	}
 	defer ldb.Close()
+
+	ldbNotFound, lerr := leveldb.OpenFile(notFoundFile, nil)
+	if lerr != nil {
+		fmt.Println("Open fetch not found file error,", lerr)
+	}
+	defer ldbNotFound.Close()
+
 	//fetch prepare
 	switch zone {
 	case "bc":
@@ -76,7 +94,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 
 		items := strings.Split(line, "\t")
 		if !(len(items) == 1 || len(items) == 2) {
-			fmt.Println("Invalid resource line,", line)
+			log.Printf("Invalid resource line `%s`", line)
 			continue
 		}
 
@@ -86,7 +104,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 		if len(items) == 1 {
 			resUri, pErr := url.Parse(resUrl)
 			if pErr != nil {
-				fmt.Println("Invalid resource url", resUrl)
+				log.Printf("Invalid resource url `%s`", resUrl)
 				continue
 			}
 			resKey = resUri.Path
@@ -103,6 +121,11 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 			continue
 		}
 
+		nfVal, nfExists := ldbNotFound.Get([]byte(resUrl), nil)
+		if nfExists == nil && string(nfVal) == resKey {
+			continue
+		}
+
 		//otherwise fetch it
 		fetchWaitGroup.Add(1)
 		fetchTasks <- func() {
@@ -112,7 +135,14 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone 
 			if fErr == nil {
 				ldb.Put([]byte(resUrl), []byte(resKey), nil)
 			} else {
-				fmt.Println("Fetch", resUrl, " error due to", fErr)
+				if v, ok := fErr.(*rpc.ErrorInfo); ok {
+					if v.Code == 404 {
+						ldbNotFound.Put([]byte(resUrl), []byte(resKey), nil)
+					}
+					log.Printf("Fetch %s error due to `%s`", resUrl, v.Err)
+				} else {
+					log.Printf("Fetch %s error due to `%s`", resUrl, fErr)
+				}
 			}
 		}
 	}
