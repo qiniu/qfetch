@@ -25,7 +25,7 @@ func doFetch(tasks chan func()) {
 	}
 }
 
-func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
+func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
 	//open file
 	fh, openErr := os.Open(filePath)
 	if openErr != nil {
@@ -58,6 +58,8 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone,
 		fmt.Println("Open fetch not found file error,", lerr)
 	}
 	defer ldbNotFound.Close()
+
+	//check whether
 
 	//fetch prepare
 	switch zone {
@@ -94,7 +96,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone,
 
 		items := strings.Split(line, "\t")
 		if !(len(items) == 1 || len(items) == 2) {
-			log.Printf("Invalid resource line `%s`", line)
+			log.Printf("Invalid resource line `%s`\n", line)
 			continue
 		}
 
@@ -104,7 +106,7 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone,
 		if len(items) == 1 {
 			resUri, pErr := url.Parse(resUrl)
 			if pErr != nil {
-				log.Printf("Invalid resource url `%s`", resUrl)
+				log.Printf("Invalid resource url `%s`\n", resUrl)
 				continue
 			}
 			resKey = resUri.Path
@@ -118,12 +120,23 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone,
 		//check from leveldb whether it is done
 		val, exists := ldb.Get([]byte(resUrl), nil)
 		if exists == nil && string(val) == resKey {
+			log.Printf("Skip url fetched `%s` => `%s`\n", resUrl, resKey)
 			continue
 		}
 
 		nfVal, nfExists := ldbNotFound.Get([]byte(resUrl), nil)
 		if nfExists == nil && string(nfVal) == resKey {
+			log.Printf("Skip url 404 `%s` => `%s`\n", resUrl, resKey)
 			continue
+		}
+
+		//check whether file exists in bucket
+		if checkExists {
+			if entry, err := client.Stat(nil, bucket, resKey); err == nil && entry.Hash != "" {
+				ldb.Put([]byte(resUrl), []byte(resKey), nil)
+				log.Printf("Skip url exists `%s` => `%s`\n", resUrl, resKey)
+				continue
+			}
 		}
 
 		//otherwise fetch it
@@ -139,9 +152,9 @@ func Fetch(job, filePath, bucket, accessKey, secretKey string, worker int, zone,
 					if v.Code == 404 {
 						ldbNotFound.Put([]byte(resUrl), []byte(resKey), nil)
 					}
-					log.Printf("Fetch %s error due to `%s`", resUrl, v.Err)
+					log.Printf("Fetch `%s` error due to `%s`\n", resUrl, v.Err)
 				} else {
-					log.Printf("Fetch %s error due to `%s`", resUrl, fErr)
+					log.Printf("Fetch `%s` error due to `%s`\n", resUrl, fErr)
 				}
 			}
 		}

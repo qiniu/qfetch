@@ -19,6 +19,7 @@ func main() {
 	var secretKey string
 	var zone string
 	var logFile string
+	var checkExists bool
 
 	flag.Usage = func() {
 		fmt.Println(`Usage of qfetch:
@@ -28,6 +29,7 @@ func main() {
   -job="": job name to record the progress
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
+  -check-exists: check whether file exists in bucket
   -log="": fetch failed log file
   -zone="nb": qiniu zone, nb or bc or aws`)
 	}
@@ -40,6 +42,7 @@ func main() {
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
 	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb or bc or aws")
 	flag.StringVar(&logFile, "log", "", "fetch failed log file")
+	flag.BoolVar(&checkExists, "check-exists", false, "check whether file exists in bucket")
 
 	flag.Parse()
 
@@ -83,5 +86,5 @@ func main() {
 		return
 	}
 
-	qfetch.Fetch(job, file, bucket, accessKey, secretKey, worker, zone, logFile)
+	qfetch.Fetch(job, checkExists, file, bucket, accessKey, secretKey, worker, zone, logFile)
 }
