@@ -30,8 +30,10 @@ func main() {
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
   -check-exists: check whether file exists in bucket
-  -log="": fetch failed log file
-  -zone="nb": qiniu zone, nb or bc or aws`)
+  -log="": fetch runtime log file
+  -zone="nb": qiniu zone, nb or bc or aws
+
+ version 1.5`)
 	}
 
 	flag.StringVar(&job, "job", "", "job name to record the progress")
@@ -41,7 +43,7 @@ func main() {
 	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
 	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb or bc or aws")
-	flag.StringVar(&logFile, "log", "", "fetch failed log file")
+	flag.StringVar(&logFile, "log", "", "fetch runtime log file")
 	flag.BoolVar(&checkExists, "check-exists", false, "check whether file exists in bucket")
 
 	flag.Parse()

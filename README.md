@@ -18,7 +18,30 @@ qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://develope
 
 |版本     |支持平台|链接|
 |--------|---------|----|
-|qfetch v1.4|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.4.zip)|
+|qfetch v1.5|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.5.zip)|
+
+###安装
+
+该工具不需要安装，只需要从上面的下载链接下载zip包之后解压即可使用。其中文件名和对应系统关系如下：
+
+|文件名|描述|
+|-----|-----|
+|qfetch_linux_386|Linux 32位系统|
+|qfetch_linux_amd64|Linux 64位系统|
+|qfetch_linux_arm|Linux ARM CPU|
+|qfetch_windows_386.exe|Windows 32位系统|
+|qfetch_windows_amd64.exe|Windows 64位系统|
+|qfetch_darwin_386|Mac 32位系统，这种系统很老了|
+|qfetch_darwin_amd64|Mac 64位系统，主流的系统|
+
+注意，如果在Linux或者Mac系统上遇到`Permission Denied`的错误，请使用命令`chmod +x qfetch`来为文件添加可执行权限。这里的`qfetch`是上面文件重命名之后的简写。
+
+对于Linux或者Mac，如果希望能够在任何位置都可以执行，那么可以把`qfetch`所在的目录加入到环境变量`$PATH`中去。或者最简单的方法如下：
+
+```
+sudo mv qfetch /usr/local/bin
+```
+另外，由于本工具是一个命令行工具，在Windows下面请先打开命令行终端，然后输入工具名称执行，不要双击打开。如果你希望可以在任意目录下使用qfetch，请将qfetch工具可执行文件所在目录添加到系统的环境变量中。
 
 ###使用
 该工具是一个命令行工具，需要指定相关的参数来运行。
@@ -31,6 +54,8 @@ Usage of qfetch:
   -job="": job name to record the progress
   -file="": resource list file to fetch
   -worker=0: max goroutine in a worker group
+  -log="": run log output file
+  -check-exists=false: check whether file already exists in bucket, if exists, skip fetch
   -zone="nb": qiniu zone, nb or bc or aws
 ```
 
@@ -43,6 +68,7 @@ Usage of qfetch:
 |job|任务的名称，指定这个参数主要用来将抓取成功的文件放在本地数据库中，便于后面核对|是|
 |file|待抓取资源链接所在文件的本地路径，内容由待抓取的资源外链和对应的保存在七牛空间中的文件名组成的行构成|是|
 |worker|抓取的并发数量，可以适当地指定较大的并发请求数量来提高批量抓取的效率，可根据目标源站实际带宽和文件平均大小来计算得出|是|
+|log|抓取过程中打印的一些日志信息输出文件，如果不指定，则输出到终端|否|
 |zone|请求发送到的入口机房，可以不指定，默认为nb，即七牛宁波机房；可选设置为bc，即七牛北京机房|否|
 
 
@@ -114,14 +140,17 @@ http://img.abc.com/0/000/563/0000563515.fid
 
 
 ###日志
-抓取成功的文件在本地都会写入以`job`参数指定的值为名称的本地leveldb数据库中。该leveldb名称以`.`开头，所以在Linux或者Mac系统下面是个隐藏文件。在整个文件索引都抓取完成后，可以使用[leveldb](https://github.com/jemygraw/leveldb)工具来导出所有的成功的文件列表，和原来的列表比较，就可以得出失败的抓取列表。上面的方法也可以被用来验证抓取的完整性。
+抓取成功的文件在本地都会写入以`job`参数指定的值为名称的本地leveldb数据库中。该数据库名称格式为`<jobName>.job`，由于该leveldb名称以`.`开头，所以在Linux或者Mac系统下面是个隐藏文件。在整个文件索引都抓取完成后，可以使用[leveldb](https://github.com/jemygraw/leveldb)工具来导出所有的成功的文件列表，和原来的列表比较，就可以得出失败的抓取列表。上面的方法也可以被用来验证抓取的完整性。
+
+另外抓取过程中发现回复为404的列表，单独放到`.<jobName>.404.job`的leveldb数据库中，抓取结束之后可以导出这部分数据做检查。
+
+其中`<jobName>`就是参数`-job`所指定的名字，左右两边的`<`和`>`只是表示这个是参数，实际不存在。
 
 ###示例
 抓取指令为：
 
 ```
-qfetch -ak='x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk='OCCTbp-zhD8x_spN0tFx4WnMABHxggvveg9l9m07' 
--bucket='image' -file='diff.txt' -worker=300 -job='diff'  | tee diff.log
+qfetch -ak 'x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk 'OCCTbp-zhD8x_spN0tFx4WnMABHxggvveg9l9m07' -bucket 'image' -file 'diff.txt' -job 'diff' -worker 100 -log 'run.log' -check-exists
 ```
 **注意：** Windows系统下面使用该工具时，指定的参数两边不需要单引号。
 
@@ -130,7 +159,13 @@ qfetch -ak='x98pdzDw8dtwM-XnjCwlatqwjAeed3lwyjcNYqjv' -sk='OCCTbp-zhD8x_spN0tFx4
 导出成功列表：
 
 ```
-leveldb -export='.diff.job' >> list.txt
+leveldb -export '.diff.job' >> success.list.txt
+```
+
+导出404列表：
+
+```
+leveldb -export '.diff.404.job' >> 404.list.txt
 ```
 
 注意，上面任务的名字是`diff`，而任务对应的的leveldb的名字是`.diff.job`。
@@ -147,7 +182,7 @@ $ wc -l diff.txt
 
 使用下面方式获取成功抓取数量：
 ```
-$ leveldb -count='.diff.job'
+$ leveldb -count '.diff.job'
 ```
 
 然后比较一致即可，如果发现数量不一致，可以重新运行原始命令（设置太大并发的情况下，存在失败的可能性）。

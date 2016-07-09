@@ -25,41 +25,45 @@ func doFetch(tasks chan func()) {
 	}
 }
 
-func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
-	//open file
-	fh, openErr := os.Open(filePath)
+func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
+	//open file list to fetch
+	fh, openErr := os.Open(fileListPath)
 	if openErr != nil {
 		fmt.Println("Open resource file error,", openErr)
 		return
 	}
 	defer fh.Close()
 
-	logFh, openErr := os.Create(logFile)
-	if openErr != nil {
-		log.SetOutput(os.Stdout)
+	//try open log file
+	if logFile != "" {
+		logFh, openErr := os.Create(logFile)
+		if openErr != nil {
+			log.SetOutput(os.Stdout)
+		} else {
+			log.SetOutput(logFh)
+			defer logFh.Close()
+		}
 	} else {
-		log.SetOutput(logFh)
-		defer logFh.Close()
+		log.SetOutput(os.Stdout)
+		defer os.Stdout.Sync()
 	}
 
-	//open leveldb
-	proFile := fmt.Sprintf(".%s.job", job)
-	notFoundFile := fmt.Sprintf(".%s.404.job", job)
-	ldb, lerr := leveldb.OpenFile(proFile, nil)
+	//open leveldb success and not found
+	successLdbPath := fmt.Sprintf(".%s.job", job)
+	notFoundLdbPath := fmt.Sprintf(".%s.404.job", job)
 
+	successLdb, lerr := leveldb.OpenFile(successLdbPath, nil)
 	if lerr != nil {
 		fmt.Println("Open fetch progress file error,", lerr)
 		return
 	}
-	defer ldb.Close()
+	defer successLdb.Close()
 
-	ldbNotFound, lerr := leveldb.OpenFile(notFoundFile, nil)
+	notFoundLdb, lerr := leveldb.OpenFile(notFoundLdbPath, nil)
 	if lerr != nil {
 		fmt.Println("Open fetch not found file error,", lerr)
 	}
-	defer ldbNotFound.Close()
-
-	//check whether
+	defer notFoundLdb.Close()
 
 	//fetch prepare
 	switch zone {
@@ -76,6 +80,7 @@ func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey 
 	}
 	client := rs.New(&mac)
 
+	//init work group
 	once.Do(func() {
 		fetchTasks = make(chan func(), worker)
 		for i := 0; i < worker; i++ {
@@ -85,7 +90,7 @@ func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey 
 
 	fetchWaitGroup := sync.WaitGroup{}
 
-	//scan each line
+	//scan each line and add task
 	bReader := bufio.NewScanner(fh)
 	bReader.Split(bufio.ScanLines)
 	for bReader.Scan() {
@@ -117,23 +122,24 @@ func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey 
 			resKey = items[1]
 		}
 
-		//check from leveldb whether it is done
-		val, exists := ldb.Get([]byte(resUrl), nil)
+		//check from leveldb success whether it is done
+		val, exists := successLdb.Get([]byte(resUrl), nil)
 		if exists == nil && string(val) == resKey {
 			log.Printf("Skip url fetched `%s` => `%s`\n", resUrl, resKey)
 			continue
 		}
 
-		nfVal, nfExists := ldbNotFound.Get([]byte(resUrl), nil)
+		//check from leveldb not found whether it meet 404
+		nfVal, nfExists := notFoundLdb.Get([]byte(resUrl), nil)
 		if nfExists == nil && string(nfVal) == resKey {
 			log.Printf("Skip url 404 `%s` => `%s`\n", resUrl, resKey)
 			continue
 		}
 
-		//check whether file exists in bucket
+		//check whether file already exists in bucket
 		if checkExists {
 			if entry, err := client.Stat(nil, bucket, resKey); err == nil && entry.Hash != "" {
-				ldb.Put([]byte(resUrl), []byte(resKey), nil)
+				successLdb.Put([]byte(resUrl), []byte(resKey), nil)
 				log.Printf("Skip url exists `%s` => `%s`\n", resUrl, resKey)
 				continue
 			}
@@ -146,11 +152,11 @@ func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey 
 
 			_, fErr := client.Fetch(nil, bucket, resKey, resUrl)
 			if fErr == nil {
-				ldb.Put([]byte(resUrl), []byte(resKey), nil)
+				successLdb.Put([]byte(resUrl), []byte(resKey), nil)
 			} else {
 				if v, ok := fErr.(*rpc.ErrorInfo); ok {
 					if v.Code == 404 {
-						ldbNotFound.Put([]byte(resUrl), []byte(resKey), nil)
+						notFoundLdb.Put([]byte(resUrl), []byte(resKey), nil)
 					}
 					log.Printf("Fetch `%s` error due to `%s`\n", resUrl, v.Err)
 				} else {
@@ -160,5 +166,6 @@ func Fetch(job string, checkExists bool, filePath, bucket, accessKey, secretKey 
 		}
 	}
 
+	//wait for all the fetch done
 	fetchWaitGroup.Wait()
 }
