@@ -33,7 +33,7 @@ func main() {
   -log="": fetch runtime log file
   -zone="nb": qiniu zone, nb or bc or na0
 
- version 1.5`)
+ version 1.6`)
 	}
 
 	flag.StringVar(&job, "job", "", "job name to record the progress")
