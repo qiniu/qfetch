@@ -56,7 +56,7 @@ Usage of qfetch:
   -worker=0: max goroutine in a worker group
   -log="": run log output file
   -check-exists=false: check whether file already exists in bucket, if exists, skip fetch
-  -zone="nb": qiniu zone, nb or bc or aws
+  -zone="nb": qiniu zone, nb or bc or na0
 ```
 
 

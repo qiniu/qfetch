@@ -62,6 +62,7 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 	notFoundLdb, lerr := leveldb.OpenFile(notFoundLdbPath, nil)
 	if lerr != nil {
 		fmt.Println("Open fetch not found file error,", lerr)
+		return
 	}
 	defer notFoundLdb.Close()
 
@@ -71,6 +72,8 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 		conf.IO_HOST = "http://iovip-z1.qbox.me"
 	case "aws":
 		conf.IO_HOST = "http://iovip.gdipper.com"
+	case "na0":
+		conf.IO_HOST = "http://iovip-na0.qbox.me"
 	default:
 		conf.IO_HOST = "http://iovip.qbox.me"
 	}
