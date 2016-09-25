@@ -18,7 +18,7 @@ qfetch是一个数据迁移工具，利用七牛提供的[fetch](http://develope
 
 |版本     |支持平台|链接|
 |--------|---------|----|
-|qfetch v1.6|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.6.zip)|
+|qfetch v1.7|Linux, Windows, Mac OSX|[下载](http://devtools.qiniu.com/qfetch-v1.7.zip)|
 
 ###安装
 
@@ -56,7 +56,7 @@ Usage of qfetch:
   -worker=0: max goroutine in a worker group
   -log="": run log output file
   -check-exists=false: check whether file already exists in bucket, if exists, skip fetch
-  -zone="nb": qiniu zone, nb or bc or na0
+  -zone="nb": qiniu zone, nb, bc, hn or na0
 ```
 
 
@@ -72,6 +72,14 @@ Usage of qfetch:
 |log|抓取过程中打印的一些日志信息输出文件，如果不指定，则输出到终端|否|
 |zone|请求发送到的入口机房，可以不指定，默认为nb，即七牛宁波机房；可选设置为bc，即七牛北京机房|否|
 
+**多机房支持**
+
+|机房|zone值|
+|----|----|
+|华东|nb|
+|华北|bc|
+|华南|hn|
+|北美|na0|
 
 **模式一:**
 

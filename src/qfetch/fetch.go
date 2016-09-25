@@ -70,6 +70,8 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 	switch zone {
 	case "bc":
 		conf.IO_HOST = "http://iovip-z1.qbox.me"
+	case "hn":
+		conf.IO_HOST = "http://iovip-z2.qbox.me"
 	case "aws":
 		conf.IO_HOST = "http://iovip.gdipper.com"
 	case "na0":

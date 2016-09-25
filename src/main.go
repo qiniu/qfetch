@@ -31,9 +31,9 @@ func main() {
   -worker=0: max goroutine in a worker group
   -check-exists: check whether file exists in bucket
   -log="": fetch runtime log file
-  -zone="nb": qiniu zone, nb or bc or na0
+  -zone="nb": qiniu zone, nb, bc, hn or na0
 
- version 1.6`)
+ version 1.7`)
 	}
 
 	flag.StringVar(&job, "job", "", "job name to record the progress")
@@ -42,7 +42,7 @@ func main() {
 	flag.StringVar(&bucket, "bucket", "", "qiniu bucket")
 	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
-	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb or bc or na0")
+	flag.StringVar(&zone, "zone", "nb", "qiniu zone, nb, bc, hn or na0")
 	flag.StringVar(&logFile, "log", "", "fetch runtime log file")
 	flag.BoolVar(&checkExists, "check-exists", false, "check whether file exists in bucket")
 
@@ -83,7 +83,7 @@ func main() {
 		return
 	}
 
-	if !(zone == "nb" || zone == "bc" || zone == "aws" || zone == "na0") {
+	if !(zone == "nb" || zone == "bc" || zone == "hn" || zone == "aws" || zone == "na0") {
 		fmt.Println("Error: zone is incorrect")
 		return
 	}
