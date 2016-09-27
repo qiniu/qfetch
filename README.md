@@ -1,3 +1,6 @@
+https://goreportcard.com/badge/github.com/qiniu/qfetch
+
+
 #qfetch
 
 ###简介
