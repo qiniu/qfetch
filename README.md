@@ -1,5 +1,4 @@
-https://goreportcard.com/badge/github.com/qiniu/qfetch
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qfetch)](https://goreportcard.com/report/github.com/qiniu/qfetch)
 
 #qfetch
 
