@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/qiniu/api.v6/auth/digest"
-	"github.com/qiniu/api.v6/conf"
 	"github.com/qiniu/api.v6/rs"
 	"github.com/qiniu/rpc"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -27,7 +26,7 @@ func doFetch(tasks chan func()) {
 	}
 }
 
-func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secretKey string, worker int, zone, logFile string) {
+func Fetch(mac *digest.Mac, job string, checkExists bool, fileListPath, bucket string, logFile string, worker int) {
 	//open file list to fetch
 	fh, openErr := os.Open(fileListPath)
 	if openErr != nil {
@@ -72,25 +71,7 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 	}
 	defer notFoundLdb.Close()
 
-	//fetch prepare
-	switch zone {
-	case "nb":
-		conf.IO_HOST = "http://iovip.qbox.me"
-	case "bc":
-		conf.IO_HOST = "http://iovip-z1.qbox.me"
-	case "hn":
-		conf.IO_HOST = "http://iovip-z2.qbox.me"
-	case "na0":
-		conf.IO_HOST = "http://iovip-na0.qbox.me"
-	case "as0":
-		conf.IO_HOST = "http://iovip-as0.qbox.me"
-	}
-
-	mac := digest.Mac{
-		accessKey, []byte(secretKey),
-	}
-	client := rs.New(&mac)
-
+	client := rs.New(mac)
 	//init work group
 	once.Do(func() {
 		fetchTasks = make(chan func(), worker)

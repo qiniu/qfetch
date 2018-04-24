@@ -7,6 +7,7 @@ import (
 	"qfetch"
 	"runtime"
 
+	"github.com/qiniu/api.v6/auth/digest"
 	"github.com/qiniu/api.v6/conf"
 )
 
@@ -19,7 +20,6 @@ func main() {
 	var bucket string
 	var accessKey string
 	var secretKey string
-	var zone string
 	var logFile string
 	var checkExists bool
 
@@ -36,8 +36,7 @@ func main() {
   -file="": resource list file to fetch
   -worker=1: max goroutine in a worker group
   -check-exists: check whether file exists in bucket
-  -log="": fetch runtime log file
-  -zone="": qiniu zone, support [nb, bc, hn, as0, na0]
+  -log="": save fetch runtime log to specified file
   -rs-host="": rs host to support specified qos system
   -io-host="": io host to support specified qos sytem
  version 1.8`)
@@ -49,7 +48,6 @@ func main() {
 	flag.StringVar(&bucket, "bucket", "", "qiniu bucket")
 	flag.StringVar(&accessKey, "ak", "", "qiniu access key")
 	flag.StringVar(&secretKey, "sk", "", "qiniu secret key")
-	flag.StringVar(&zone, "zone", "", "qiniu zone, support [nb, bc, hn, as0, na0]")
 	flag.StringVar(&logFile, "log", "", "fetch runtime log file")
 	flag.BoolVar(&checkExists, "check-exists", false, "check whether file exists in bucket")
 	flag.StringVar(&rsHost, "rs-host", "", "rs host to support specified qos system")
@@ -97,18 +95,39 @@ func main() {
 		return
 	}
 
-	if rsHost != "" && ioHost != "" && zone != "" {
-		fmt.Println("Error: if you specified rs host and io host, zone should be empty")
-		return
+	mac := digest.Mac{
+		accessKey, []byte(secretKey),
 	}
 
-	if zone != "" && !(zone == "nb" || zone == "bc" || zone == "hn" || zone == "as0" || zone == "na0") {
-		fmt.Println("Error: zone is incorrect")
-		return
+	if rsHost != "" && ioHost != "" {
+		conf.IO_HOST = ioHost
+		conf.RS_HOST = rsHost
+	} else {
+		//get bucket info
+		bucktInfo, gErr := qfetch.GetBucketInfo(&mac, bucket)
+		if gErr != nil {
+			fmt.Println("Error: get bucket info error", gErr)
+			return
+		} else {
+			switch bucktInfo.Region {
+			case "z0":
+				conf.RS_HOST = "http://rs.qbox.me"
+				conf.IO_HOST = "http://iovip.qbox.me"
+			case "z1":
+				conf.RS_HOST = "http://rs-z1.qbox.me"
+				conf.IO_HOST = "http://iovip-z1.qbox.me"
+			case "z2":
+				conf.RS_HOST = "http://rs-z2.qbox.me"
+				conf.IO_HOST = "http://iovip-z2.qbox.me"
+			case "na0":
+				conf.RS_HOST = "http://rs-na0.qbox.me"
+				conf.IO_HOST = "http://iovip-na0.qbox.me"
+			case "as0":
+				conf.RS_HOST = "http://rs-as0.qbox.me"
+				conf.IO_HOST = "http://iovip-as0.qbox.me"
+			}
+		}
 	}
 
-	conf.IO_HOST = ioHost
-	conf.RS_HOST = rsHost
-
-	qfetch.Fetch(job, checkExists, file, bucket, accessKey, secretKey, worker, zone, logFile)
+	qfetch.Fetch(&mac, job, checkExists, file, bucket, logFile, worker)
 }
