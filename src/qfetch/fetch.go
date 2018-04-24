@@ -3,16 +3,18 @@ package qfetch
 import (
 	"bufio"
 	"fmt"
-	"github.com/qiniu/api.v6/auth/digest"
-	"github.com/qiniu/api.v6/conf"
-	"github.com/qiniu/api.v6/rs"
-	"github.com/qiniu/rpc"
-	"github.com/syndtr/goleveldb/leveldb"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/qiniu/api.v6/auth/digest"
+	"github.com/qiniu/api.v6/conf"
+	"github.com/qiniu/api.v6/rs"
+	"github.com/qiniu/rpc"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
 var once sync.Once
@@ -48,6 +50,10 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 		defer os.Stdout.Sync()
 	}
 
+	ldbWOpt := opt.WriteOptions{
+		Sync: true,
+	}
+
 	//open leveldb success and not found
 	successLdbPath := fmt.Sprintf(".%s.job", job)
 	notFoundLdbPath := fmt.Sprintf(".%s.404.job", job)
@@ -68,16 +74,16 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 
 	//fetch prepare
 	switch zone {
+	case "nb":
+		conf.IO_HOST = "http://iovip.qbox.me"
 	case "bc":
 		conf.IO_HOST = "http://iovip-z1.qbox.me"
 	case "hn":
 		conf.IO_HOST = "http://iovip-z2.qbox.me"
-	case "aws":
-		conf.IO_HOST = "http://iovip.gdipper.com"
 	case "na0":
 		conf.IO_HOST = "http://iovip-na0.qbox.me"
-	default:
-		conf.IO_HOST = "http://iovip.qbox.me"
+	case "as0":
+		conf.IO_HOST = "http://iovip-as0.qbox.me"
 	}
 
 	mac := digest.Mac{
@@ -144,7 +150,7 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 		//check whether file already exists in bucket
 		if checkExists {
 			if entry, err := client.Stat(nil, bucket, resKey); err == nil && entry.Hash != "" {
-				successLdb.Put([]byte(resUrl), []byte(resKey), nil)
+				successLdb.Put([]byte(resUrl), []byte(resKey), &ldbWOpt)
 				log.Printf("Skip url exists `%s` => `%s`\n", resUrl, resKey)
 				continue
 			}
@@ -161,7 +167,7 @@ func Fetch(job string, checkExists bool, fileListPath, bucket, accessKey, secret
 			} else {
 				if v, ok := fErr.(*rpc.ErrorInfo); ok {
 					if v.Code == 404 {
-						notFoundLdb.Put([]byte(resUrl), []byte(resKey), nil)
+						notFoundLdb.Put([]byte(resUrl), []byte(resKey), &ldbWOpt)
 					}
 					log.Printf("Fetch `%s` error due to `%s`\n", resUrl, v.Err)
 				} else {
